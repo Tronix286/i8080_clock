@@ -31,4 +31,5 @@ Iam using batch script `makeit.bat` for build final firmware named `full.bin`.
 For debugging there is a small [emulator](/software/emulator) of this platform:
 
 ![emu](pics/photo_2023-10-08_18-09-48.jpg)
+
 Building with MinGW `makefile`
