@@ -136,11 +136,13 @@ void drawWeather()
 //		myftoa(getCast(),2,str_buf);
 //		LCD_ShowString(20,60,16,str_buf,1);
 
+/*
 	LCD_Fill(400,20,465,58,CLOCK_BG);
 	memset(str_buf,0,20);
 	w_cast = round(getCast());
 	sprintf((char *)str_buf,"%d", w_cast);
 	tftstDrawTextWithFont(&tftstFont_arialRegular_32, 400, 20, str_buf, CLOCK_FG, CLOCK_BG);
+*/
 	switch (w_cast)
 	{
 	   case 0:
