@@ -94,7 +94,7 @@ float getCast() {
     return cast;
 }
 
-#if 0
+#if 1
 // получить изменение давления в Па за 3 часа
 int getTrend() {
     return delta;

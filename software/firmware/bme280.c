@@ -28,7 +28,7 @@ int32_t adc_T, adc_P, adc_H, t_fine;
     uint8_t _standby_time = STANDBY_250;		// Time between measurements in NORMAL_MODE	  |
     uint8_t _filter_coef = FILTER_16; 		// Filter ratio IIR                           |
     uint8_t _temp_oversampl = SAMPLING_X4;	// Temperature module oversampling parameter  |
-    uint8_t _hum_oversampl = SAMPLING_X1;	// Humidity module oversampling parameter     |
+    uint8_t _hum_oversampl = SAMPLING_X4;	// Humidity module oversampling parameter     |
     uint8_t _press_oversampl = SAMPLING_X2;	// Pressure module oversampling parameter     |
 
 BME280calib BME280_calib;
@@ -236,6 +236,7 @@ uint8_t BME280_readHumidity(uint32_t *humi)
   v_x1_u32r = (v_x1_u32r > 419430400 ? 419430400 : v_x1_u32r);
    
   H = (uint32_t)(v_x1_u32r / 4096);
+
   *humi = H;
 
   return 1;

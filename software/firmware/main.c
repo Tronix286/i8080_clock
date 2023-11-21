@@ -23,15 +23,17 @@ char DayOfWeek[][15] = {"Corkqfrfn}f", "Ponfefl}nik", "Csoqnik", "Rqfea","Xfscfq
 extern TFTSTCustomFontData tftstFont_arialRegular_120;
 extern TFTSTCustomFontData tftstFont_arialRegular_48;
 extern TFTSTCustomFontData tftstFont_arialRegular_32;
-u8 str_buf[20] = {0};	// string buffer
-unsigned char timeb[7] = {0x12,0x33,0x15,0x01,0x01,0x01,0x23};
+u8 str_buf[40];	// string buffer
+//unsigned char timeb[7] = {0x12,0x33,0x15,0x01,0x01,0x01,0x23};
+unsigned char timeb[7];
 unsigned char time_bcd[7];
 char lcd_time[5];
 char prev_lcd_time[5];
 char lcd_date[17] = {"\1DD\1.\1MM\1.\00120YY\0"};
-unsigned char prev_lcd_date[5] = {0xFF,0xFF,0xFF,0xFF};
+unsigned char prev_lcd_date[5];
 unsigned char old_sec;
-uint8_t scrachpad[10] = {0x87,1,0x4b,0x46,0x7f,0xff,0x0c,0x10,0xb7}; //+24.4
+uint8_t scrachpad[10];
+//uint8_t scrachpad[10] = {0x87,1,0x4b,0x46,0x7f,0xff,0x0c,0x10,0xb7}; //+24.4
 //uint8_t scrachpad[10] = {0x35,0xff,0xff,0xff,0x7f,0xff,0x0c,0x10,0x03}; //-12.7
 uint32_t total_seconds=0;     // global seconds counter
 uint32_t btn3_time;	// button3 time
@@ -48,6 +50,7 @@ uint32_t pressure, humidity, old_pressure, old_humidity;
 float tmp_float;
 uint8_t read_sensors_mutex = 0;
 uint8_t update_weather_mutex = 0;
+uint8_t status_mutex = 0;
 
 uint8_t bcd_to_decimal(uint8_t x) {
     return x - 6 * (x >> 4);
@@ -85,6 +88,11 @@ uint8_t readkey() __z88dk_fastcall
 }
 
 
+void clrStrBuf()
+{
+	memset(str_buf,0,40);
+}
+
 void drawHours(uint16_t col)
 {
 	tftstDrawCharWithFont(&tftstFont_arialRegular_120, 90, 0, lcd_time[0], col, CLOCK_BG);
@@ -116,14 +124,14 @@ void readBMEsensor()
 
 void drawHumidity()
 {
-	memset(str_buf,0,20);
+	clrStrBuf();
 	sprintf((char *)str_buf,"%02lu.%lu%%", humidity / 1024, ((humidity * 10)/1024) % 10);
 	tftstDrawTextWithFont(&tftstFont_arialRegular_48, 257-(tftstTextWithFontLength(&tftstFont_arialRegular_48,str_buf)/2)-20, 230, str_buf, CLOCK_FG, 0x18E3);
 }
 
 void drawPressure()
 {
-	memset(str_buf,0,20);
+	clrStrBuf();
 	//sprintf((char *)str_buf,"%04lu.%02lu", pressure/100, pressure % 100);
 	sprintf((char *)str_buf,"%lu", (pressure*75)/10000);
 	tftstDrawTextWithFont(&tftstFont_arialRegular_48, 398-(tftstTextWithFontLength(&tftstFont_arialRegular_48,str_buf)/2), 230, str_buf, CLOCK_FG, 0x18E3);
@@ -136,10 +144,10 @@ void drawWeather()
 //		myftoa(getCast(),2,str_buf);
 //		LCD_ShowString(20,60,16,str_buf,1);
 
+	w_cast = round(getCast());
 /*
 	LCD_Fill(400,20,465,58,CLOCK_BG);
 	memset(str_buf,0,20);
-	w_cast = round(getCast());
 	sprintf((char *)str_buf,"%d", w_cast);
 	tftstDrawTextWithFont(&tftstFont_arialRegular_32, 400, 20, str_buf, CLOCK_FG, CLOCK_BG);
 */
@@ -171,22 +179,52 @@ void drawWeather()
 	}
 }
 
-void main ()
+
+void drawStatusScr()
 {
-	i2c_init();
-	rtc_init();
+	LCD_Clear(SCR_BG);
 
-	ds_start_conversion();
-	BME280_begin(MODE_NORMAL);
+	fillRoundRect(10,10,460,300,15,STATUS_BG);
+	POINT_COLOR = WHITE;
+	LCD_ShowString(110,15,"i8080 Clock v1.15 (C) Tronix 2023",1);
+	clrStrBuf();
+	sprintf((char *)str_buf,"Uptime : %lu days %lu hours %lu minutes", total_seconds/86400, (total_seconds%86400)/3600, ((total_seconds%86400)%3600)/60);
+	LCD_ShowString(20,30+16*1,str_buf,1);
 
-	LCD_Init();
+	clrStrBuf();
+	sprintf((char *)str_buf,"BME280 temperature  = %02ld.%02ld C ; raw=%ld", temperature / 100, temperature % 100,temperature);
+	LCD_ShowString(20,30+16*4,str_buf,1);
+	clrStrBuf();
+	sprintf((char *)str_buf,"BME280 humidity     = %02lu.%02lu %%", humidity / 1024, ((humidity * 100)/1024) % 100);
+	LCD_ShowString(20,30+16*5,str_buf,1);
+	clrStrBuf();
+	sprintf((char *)str_buf,"BME280 pressure     = %04lu.%02lu hPa", pressure/100, pressure % 100);
+	LCD_ShowString(20,30+16*6,str_buf,1);
+
+	clrStrBuf();
+	sprintf((char *)str_buf,"DS18B20 temperature = %d.%d C",(int8_t)(curr_temp >> 8), curr_temp & 0xf);
+	LCD_ShowString(20,30+16*9,str_buf,1);
+
+	clrStrBuf();
+	sprintf((char *)str_buf,"Forecaster CAST     = %d ; delta = %d", (uint8_t)round(getCast()), getTrend());
+	LCD_ShowString(20,30+16*12,str_buf,1);
+
+
+	tftstDrawImg(gImage_sun, 60,260, CLOCK_FG, STATUS_BG);
+	tftstDrawImg(gImage_cloudy, 60+80,260, CLOCK_FG, STATUS_BG);
+	tftstDrawImg(gImage_cld_rain, 60+80*2,260, CLOCK_FG, STATUS_BG);
+	tftstDrawImg(gImage_rainy, 60+80*3,260, CLOCK_FG, STATUS_BG);
+	tftstDrawImg(gImage_storm, 60+80*4,260, CLOCK_FG, STATUS_BG);
+}
+
+void drawMainScr()
+{
+	memset(prev_lcd_time,0xFF,5);
+	memset(prev_lcd_date,0xFF,5);
 
 	LCD_Clear(SCR_BG);
 
 	fillRoundRect(10,10,460,160,15,CLOCK_BG);
-
-//	fillRoundRect(10,180,225,130,15,0x18E3); //	0x18A4
-//	fillRoundRect(245,180,225,130,15,0x18E3); //	0x18A4
 
 	fillRoundRect(10,180,146,130,15,0x18E3); //	0x18A4
 	fillRoundRect(167,180,146,130,15,0x18E3); //	0x18A4
@@ -199,7 +237,7 @@ void main ()
 //!!!
 	ds_read_scrach(scrachpad);
 
-	memset(str_buf,0,20);
+	clrStrBuf();
 	curr_temp = ds_convert_temp();
 	old_temp = curr_temp;
 	sprintf((char *)str_buf,(curr_temp & 0x8000) ? "%d.%d" : "+%d.%d",(int8_t)(curr_temp >> 8), curr_temp & 0xf);
@@ -216,6 +254,21 @@ void main ()
 	drawHumidity();
 
 	drawPressure();
+}
+
+void main ()
+{
+	i2c_init();
+	rtc_init();
+
+	ds_start_conversion();
+	BME280_begin(MODE_NORMAL);
+
+	LCD_Init();
+
+//drawStatusScr();
+//while(1);
+	drawMainScr();
 
 	// установить высоту над уровнем мор€ (ћосква 255м)
   	setH(255);
@@ -276,6 +329,17 @@ void main ()
 		//max width 60, so 61+61+41+61+61=285. (480-285)/2=97
 
 		// dispatcher
+		if ((time_bcd[1] == 0x05) && (settings_mode == 0) && status_mutex == 0)
+		{
+			status_mutex = 1;
+			drawStatusScr();
+			msleep(30000);
+			drawMainScr();
+			drawWeather();
+		}
+		if (time_bcd[1] == 0x06)
+			status_mutex = 0;
+
 		if (time_bcd[2] == 0x10) 	// 10 sec
 		   ds_start_conversion();
 
@@ -288,7 +352,7 @@ void main ()
 			   curr_temp = ds_convert_temp();
 			   if (old_temp != curr_temp)
 			   {
-			   	memset(str_buf,0,20);
+				clrStrBuf();
 			   	sprintf((char *)str_buf,(curr_temp & 0x8000) ? "%d.%d" : "+%d.%d",(int8_t)(curr_temp >> 8), curr_temp & 0xf);
 			   	LCD_Fill(12,225,155,292,0x18E3);
 			   	tftstDrawTextWithFont(&tftstFont_arialRegular_48, 68-(tftstTextWithFontLength(&tftstFont_arialRegular_48,str_buf)/2)+10, 230, str_buf, CLOCK_FG, 0x18E3);
@@ -342,6 +406,7 @@ void main ()
 			prev_lcd_date[0] = time_bcd[3];
 			prev_lcd_date[2] = time_bcd[5];
 			prev_lcd_date[3] = time_bcd[6];
+			setMonth(bcd_to_decimal(time_bcd[5]));
 		}
 
 

@@ -339,21 +339,22 @@ void gui_circle(int xc, int yc,u16 c,int r, int fill)
 								mode:0-no overlying,1-overlying
  * @retvalue   :None
 ******************************************************************************/ 
-void LCD_ShowChar(u16 x,u16 y,u16 fc, u16 bc, u8 num,u8 size,u8 mode)
+void LCD_ShowChar(u16 x,u16 y,u16 fc, u16 bc, u8 num,u8 mode)
 {  
     u8 temp;
     u8 pos,t;
 	u16 colortemp=POINT_COLOR;      
 		   
 	num=num-' ';//得到偏移后的值
-	LCD_SetWindows(x,y,x+size/2-1,y+size-1);//设置单个文字显示窗口
+	LCD_SetWindows(x,y,x+16/2-1,y+16-1);//设置单个文字显示窗口
+/*
 	if(!mode) //非叠加方式
 	{
 		
-		for(pos=0;pos<size;pos++)
+		for(pos=0;pos<16;pos++)
 		{
 			temp=asc2_1608[num][pos];		 //调用1608字体
-			for(t=0;t<size/2;t++)
+			for(t=0;t<16/2;t++)
 		    {                 
 		        if(temp&0x01)LCD_WR_DATA_16Bit(fc); 
 				else LCD_WR_DATA_16Bit(bc); 
@@ -363,11 +364,12 @@ void LCD_ShowChar(u16 x,u16 y,u16 fc, u16 bc, u8 num,u8 size,u8 mode)
 			
 		}	
 	}else//叠加方式
+*/
 	{
-		for(pos=0;pos<size;pos++)
+		for(pos=0;pos<16;pos++)
 		{
 			temp=asc2_1608[num][pos];		 //调用1608字体
-			for(t=0;t<size/2;t++)
+			for(t=0;t<16/2;t++)
 		    {   
 				POINT_COLOR=fc;              
 		        if(temp&0x01)LCD_DrawPoint(x+t,y+pos);//画一个点    
@@ -390,14 +392,14 @@ void LCD_ShowChar(u16 x,u16 y,u16 fc, u16 bc, u8 num,u8 size,u8 mode)
 								mode:0-no overlying,1-overlying
  * @retvalue   :None
 ******************************************************************************/   	  
-void LCD_ShowString(u16 x,u16 y,u8 size,char *p,u8 mode)
+void LCD_ShowString(u16 x,u16 y,char *p,u8 mode)
 {         
     while((*p<='~')&&(*p>=' '))//判断是不是非法字符!
     {   
 		if(x>(lcddev.width-1)||y>(lcddev.height-1)) 
 		return;     
-        LCD_ShowChar(x,y,POINT_COLOR,BACK_COLOR,*p,size,mode);
-        x+=size/2;
+        LCD_ShowChar(x,y,POINT_COLOR,BACK_COLOR,*p,mode);
+        x+=16/2;
         p++;
     }  
 } 

@@ -20,6 +20,6 @@
 #define CLOCK_BG 0x0366 //0x3D8E
 #define CLOCK_FG 0xD7FF //0xFF5F
 #define CLOCK_SET 0xF58B
-
+#define STATUS_BG 0xBA62
 
 #endif

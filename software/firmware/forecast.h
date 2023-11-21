@@ -9,4 +9,5 @@ void addP(long P, float t);
 void setMonth(uint8_t month);
 float getCast();
 void myftoa(double x,int f,char *str);
+int getTrend();
 #endif
